@@ -1,0 +1,15 @@
+webhook-url: "https://discord.com/api/webhooks/1234567890/abcdefghijklmnopqrstuvwxyz"
+cancel-message: "&cYour message was filtered due to being inappropriate."
+
+# Bypass permissions are perspective.bypass and openai.bypass
+perspective:
+  enabled: false
+  api-key:
+  threshold: 0.5 # Number between 0.0 and 1.0
+  cancel: false
+
+openai:
+  enabled: false
+  api-key:
+  threshold: 0.5 # Number between 0.0 and 1.0
+  cancel: false

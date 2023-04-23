@@ -23,9 +23,22 @@ public class OpenAIListener implements Listener {
         this.config = perspective.getMiscConfig();
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onChat(AsyncPlayerChatEvent event) {
+        if (config.isOpenAiCancel()) {
+            processMessage(event);
+        } else {
+            Perspective.getInstance().getServer().getScheduler().runTaskAsynchronously(Perspective.getInstance(), () -> processMessage(event));
+        }
+    }
+
+    private void processMessage(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
+
+        if (player.hasPermission("openai.bypass")) {
+            return;
+        }
+
         String message = event.getMessage();
 
         ModerationResponse response = new ModerationRequest(message).send();
@@ -53,15 +66,12 @@ public class OpenAIListener implements Listener {
                 return;
             }
 
-            if (player.hasPermission("openai.bypass")) {
-                return;
+            if (config.isOpenAiCancel()) {
+                event.setCancelled(true);
+                player.sendMessage(this.config.getCancelMessage());
             }
 
-            event.setCancelled(true);
-
-            player.sendMessage(this.config.getCancelMessage());
             WebhookUtil.sendPerspectiveWebhook("OpenAI", message, player.getName(), embeds);
-
         }
     }
 }

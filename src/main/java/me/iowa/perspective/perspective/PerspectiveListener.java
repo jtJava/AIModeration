@@ -33,9 +33,22 @@ public class PerspectiveListener implements Listener {
         attributeMap.put(AttributeType.FLIRTATION, new RequestedAttribute.Builder().build());
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onChat(AsyncPlayerChatEvent event) {
+        if (config.isPerspectiveCancel()) {
+            processMessage(event);
+        } else {
+            Perspective.getInstance().getServer().getScheduler().runTaskAsynchronously(Perspective.getInstance(), () -> processMessage(event));
+        }
+    }
+
+    private void processMessage(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
+
+        if (player.hasPermission("perspective.bypass")) {
+            return;
+        }
+
         String message = event.getMessage();
 
         AnalyzeCommentResponse response = perspectiveAPI.analyze(new AnalyzeCommentRequest.Builder()
@@ -79,13 +92,11 @@ public class PerspectiveListener implements Listener {
             return;
         }
 
-        if (player.hasPermission("perspective.bypass")) {
-            return;
+        if (this.config.isPerspectiveCancel()) {
+            event.setCancelled(true);
+            player.sendMessage(this.config.getCancelMessage());
         }
 
-        event.setCancelled(true);
-
-        player.sendMessage(this.config.getCancelMessage());
         WebhookUtil.sendPerspectiveWebhook("Perspective", message, player.getName(), embeds);
     }
 }
